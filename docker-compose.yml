@@ -1,0 +1,139 @@
+services:
+  php:
+    image: "storeframe/php:${PHP_VERSION}"
+    container_name: php
+    restart: unless-stopped
+    volumes:
+      - "~/Sites:/var/www"
+      - "~/Docker/magento/msmtprc:/etc/msmtprc"
+    networks:
+      - revproxy
+
+  mariadb:
+    image: "mariadb:${MARIADB_VERSION}"
+    container_name: mariadb
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_HOST: "mariadb"
+      MYSQL_DATABASE: "magento"
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "root"
+      MYSQL_ROOT_PASSWORD: "root"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "0"
+    command:
+      - --character-set-server=utf8
+      - --collation-server=utf8_general_ci
+      - --optimizer_switch=rowid_filter=off
+      - --optimizer_use_condition_selectivity=1
+      - --explicit_defaults_for_timestamp=on
+      - --innodb_buffer_pool_size=4G
+      - --max_allowed_packet=256M
+      - --max_heap_table_size=256M
+      - --tmp_table_size=256M
+    volumes:
+      - "~/Docker/magento/mariadb/var/lib/mysql:/var/lib/mysql"
+    networks:
+      - revproxy
+
+  elasticsearch:
+    image: "storeframe/elasticsearch:${ELASTICSEARCH_VERSION}"
+    container_name: elasticsearch
+    restart: unless-stopped
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - cluster.routing.allocation.disk.threshold_enabled=false
+      - indices.id_field_data.enabled=true
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    tmpfs:
+      - "/tmp:rw"
+    networks:
+      - revproxy
+
+  nodejs:
+    image: "storeframe/nodejs:${NODEJS_VERSION}"
+    container_name: nodejs
+    restart: unless-stopped
+    volumes:
+      - "~/Sites:/var/www"
+      - "~/Docker/magento/nodejs/usr/local/lib/node_modules:/usr/local/lib/node_modules"
+      - "/usr/local/bin/php:/usr/local/bin/php:ro"
+      - "/usr/local/bin/docker:/usr/bin/docker:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - revproxy
+
+  redis:
+    image: "redis:${REDIS_VERSION}-alpine"
+    container_name: redis
+    restart: unless-stopped
+    tmpfs:
+      - "/data:rw"
+    networks:
+      - revproxy
+
+  nginx:
+    image: "storeframe/nginx:${NGINX_VERSION}"
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "~/Sites:/var/www"
+      - "~/Docker/magento/nginx/etc/nginx/conf.d:/etc/nginx/conf.d"
+      - "~/Docker/magento/nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf"
+      - "~/Docker/magento/nginx/etc/nginx/sites-available:/etc/nginx/sites-available"
+      - "~/Docker/magento/nginx/etc/nginx/sites-enabled:/etc/nginx/sites-enabled"
+    networks:
+      - revproxy
+
+  dnsmasq:
+    image: "jpillora/dnsmasq"
+    container_name: dnsmasq
+    restart: unless-stopped
+    ports:
+      - "53:53/udp"
+    volumes:
+      - "~/Docker/magento/dnsmasq/etc/dnsmasq.conf:/etc/dnsmasq.conf"
+    cap_add:
+      - NET_ADMIN
+    networks:
+      - revproxy
+
+  mailpit:
+    image: "axllent/mailpit"
+    container_name: mailpit
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: "5000"
+      MP_DATA_FILE: "/data/mailpit.db"
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    volumes:
+      - "~/Docker/magento/mailpit/data:/data"
+    networks:
+      - revproxy
+
+  phpmyadmin:
+    image: "phpmyadmin"
+    container_name: phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_ARBITRARY: "1"
+      PMA_HOST: "mariadb"
+      PMA_PORT: "3306"
+    networks:
+      - revproxy
+
+networks:
+  revproxy:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.168.0.0/24
