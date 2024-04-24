@@ -6,6 +6,12 @@
 ```
 For example a project named johndoe situated in ~/Sites/johndoe will be accessible by johndoe.test
 ```
+
+## DNSMasq
+```
+sudo bash -c 'echo "nameserver 127.0.0.1" > /etc/resolver/test'
+```
+
 ## Php (/usr/local/bin/php)
 ```
 #!/bin/bash
