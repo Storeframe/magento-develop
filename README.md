@@ -7,7 +7,13 @@
 For example a project named johndoe situated in ~/Sites/johndoe will be accessible by johndoe.test
 ```
 
-## DNSMasq
+## To Start and Stop Docker Compose
+```
+docker compose up -d
+docker compose down
+```
+
+## DNSMasq Local Resolver
 ```
 sudo bash -c 'echo "nameserver 127.0.0.1" > /etc/resolver/test'
 ```
