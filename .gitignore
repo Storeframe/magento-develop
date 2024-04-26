@@ -1,5 +1,5 @@
 .DS_Store
 .env
+bin
 mailpit/data
 mariadb/var
-nodejs/usr

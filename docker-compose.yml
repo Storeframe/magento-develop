@@ -7,6 +7,9 @@ services:
       - "~/Sites:/var/www"
       - "~/Docker/magento/msmtprc:/etc/msmtprc"
       - "~/.ssh:/var/www/.ssh:ro"
+      - "~/Docker/magento/bin/magerun:/usr/local/bin/magerun:ro"
+      - "~/Docker/magento/bin/docker:/usr/local/bin/docker:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
     networks:
       - revproxy
 
@@ -56,6 +59,37 @@ services:
     networks:
       - revproxy
 
+  # opensearch:
+  #   image: "storeframe/opensearch:${OPENSEARCH_VERSION}"
+  #   container_name: opensearch
+  #   restart: unless-stopped
+  #   ports:
+  #     - "9200:9200"
+  #     - "9300:9300"
+  #   environment:
+  #     - discovery.type=single-node
+  #     - cluster.routing.allocation.disk.threshold_enabled=false
+  #     - indices.id_field_data.enabled=true
+  #     - DISABLE_SECURITY_PLUGIN=true
+  #     - ES_JAVA_OPTS=-Xms1g -Xmx1g
+  #   tmpfs:
+  #     - "/tmp:rw"
+  #   networks:
+  #     - revproxy
+
+  nodejs:
+    image: "storeframe/nodejs:${NODEJS_VERSION}"
+    container_name: nodejs
+    restart: unless-stopped
+    volumes:
+      - "~/Sites:/var/www"
+      # - "~/Docker/magento/nodejs/usr/local/lib/node_modules:/usr/local/lib/node_modules"
+      - "~/Docker/magento/bin/php:/usr/local/bin/php:ro"
+      - "~/Docker/magento/bin/docker:/usr/local/bin/docker:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - revproxy
+
   redis:
     image: "redis:${REDIS_VERSION}-alpine"
     container_name: redis
@@ -91,6 +125,19 @@ services:
       - "~/Docker/magento/dnsmasq/etc/dnsmasq.conf:/etc/dnsmasq.conf"
     cap_add:
       - NET_ADMIN
+    networks:
+      - revproxy
+
+  dind:
+    image: "docker:dind"
+    container_name: dind
+    restart: unless-stopped
+    privileged: true
+    ports:
+      - "2375:2375"
+    command: dockerd --host=tcp://0.0.0.0:2375 --host=unix:///var/run/docker.sock
+    environment:
+      - DOCKER_TLS_CERTDIR=""
     networks:
       - revproxy
 
