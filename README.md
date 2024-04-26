@@ -11,13 +11,13 @@ For example a project named johndoe situated in ~/Sites/johndoe will be accessib
 ```
 sudo sh setup-environment.sh
 ```
-
 ## To Start and Stop Docker Compose
 ```
 docker compose up -d
 docker compose down
 ```
-
+## To Troubleshoot DNSMasq Conflict Port 53 UDP
+disable use kernel networking for UDP in docker network setting
 ## Change Php Versions / Other Container Versions
 ```
 nano .env # change the containers version accordingly

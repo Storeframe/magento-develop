@@ -6,6 +6,7 @@ services:
     volumes:
       - "~/Sites:/var/www"
       - "~/Docker/magento/msmtprc:/etc/msmtprc"
+      - "~/.ssh:/var/www/.ssh:ro"
     networks:
       - revproxy
 
@@ -52,19 +53,6 @@ services:
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
     tmpfs:
       - "/tmp:rw"
-    networks:
-      - revproxy
-
-  nodejs:
-    image: "storeframe/nodejs:${NODEJS_VERSION}"
-    container_name: nodejs
-    restart: unless-stopped
-    volumes:
-      - "~/Sites:/var/www"
-      - "~/Docker/magento/nodejs/usr/local/lib/node_modules:/usr/local/lib/node_modules"
-      - "/usr/local/bin/php:/usr/local/bin/php:ro"
-      - "/usr/local/bin/docker:/usr/bin/docker:ro"
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
     networks:
       - revproxy
 
