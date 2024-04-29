@@ -37,45 +37,46 @@ services:
       - --max_heap_table_size=256M
       - --tmp_table_size=256M
     volumes:
+      - "~/Sites:/var/www"
       - "~/Docker/magento/mariadb/var/lib/mysql:/var/lib/mysql"
     networks:
       - revproxy
 
-  elasticsearch:
-    image: "storeframe/elasticsearch:${ELASTICSEARCH_VERSION}"
-    container_name: elasticsearch
-    restart: unless-stopped
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    environment:
-      - discovery.type=single-node
-      - cluster.routing.allocation.disk.threshold_enabled=false
-      - indices.id_field_data.enabled=true
-      - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
-    tmpfs:
-      - "/tmp:rw"
-    networks:
-      - revproxy
-
-  # opensearch:
-  #   image: "storeframe/opensearch:${OPENSEARCH_VERSION}"
-  #   container_name: opensearch
+  # elasticsearch:
+  #   image: "storeframe/elasticsearch:${ELASTICSEARCH_VERSION}"
+  #   container_name: elasticsearch
   #   restart: unless-stopped
-  #   ports:
-  #     - "9200:9200"
-  #     - "9300:9300"
+  #   # ports:
+  #   #   - "9200:9200"
+  #   #   - "9300:9300"
   #   environment:
   #     - discovery.type=single-node
   #     - cluster.routing.allocation.disk.threshold_enabled=false
   #     - indices.id_field_data.enabled=true
-  #     - DISABLE_SECURITY_PLUGIN=true
+  #     - xpack.security.enabled=false
   #     - ES_JAVA_OPTS=-Xms1g -Xmx1g
   #   tmpfs:
   #     - "/tmp:rw"
   #   networks:
   #     - revproxy
+
+  opensearch:
+    image: "storeframe/opensearch:${OPENSEARCH_VERSION}"
+    container_name: opensearch
+    restart: unless-stopped
+    # ports:
+    #   - "9200:9200"
+    #   - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - cluster.routing.allocation.disk.threshold_enabled=false
+      - indices.id_field_data.enabled=true
+      - DISABLE_SECURITY_PLUGIN=true
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    tmpfs:
+      - "/tmp:rw"
+    networks:
+      - revproxy
 
   nodejs:
     image: "storeframe/nodejs:${NODEJS_VERSION}"
@@ -83,7 +84,6 @@ services:
     restart: unless-stopped
     volumes:
       - "~/Sites:/var/www"
-      # - "~/Docker/magento/nodejs/usr/local/lib/node_modules:/usr/local/lib/node_modules"
       - "~/Docker/magento/bin/php:/usr/local/bin/php:ro"
       - "~/Docker/magento/bin/docker:/usr/local/bin/docker:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
