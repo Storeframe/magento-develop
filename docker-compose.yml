@@ -5,6 +5,7 @@ services:
     restart: unless-stopped
     volumes:
       - "~/Sites:/var/www"
+      - "~/Docker/magento/php/php.ini:/usr/local/etc/php/php.ini"
       - "~/Docker/magento/msmtprc:/etc/msmtprc"
       - "~/.ssh:/var/www/.ssh:ro"
       - "~/Docker/magento/bin/magerun:/usr/local/bin/magerun:ro"
