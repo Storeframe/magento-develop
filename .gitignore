@@ -2,3 +2,4 @@
 .env
 mailpit/data
 mariadb/var
+nginx/etc/nginx/sites-disabled
