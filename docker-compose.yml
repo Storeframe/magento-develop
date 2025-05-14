@@ -3,6 +3,7 @@ services:
     image: "storeframe/php:${PHP_VERSION}"
     container_name: php
     restart: unless-stopped
+    user: root # Fix permission issue
     volumes:
       - "~/Sites:/var/www"
       - "~/Docker/general/php/php.ini:/usr/local/etc/php/php.ini"
@@ -11,6 +12,9 @@ services:
       - "~/Docker/general/bin/magerun:/usr/local/bin/magerun:ro"
       - "~/Docker/general/bin/docker:/usr/local/bin/docker:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "~/Docker/general/bin/npm:/usr/local/bin/npm"
+      - "~/Docker/general/bin/mysql:/usr/local/bin/mysql"
+      - "~/Docker/general/bin/mysqldump:/usr/local/bin/mysqldump"
     networks:
       - revproxy
 
