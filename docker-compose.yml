@@ -5,11 +5,11 @@ services:
     restart: unless-stopped
     volumes:
       - "~/Sites:/var/www"
-      - "~/Docker/magento/php/php.ini:/usr/local/etc/php/php.ini"
-      - "~/Docker/magento/msmtprc:/etc/msmtprc"
+      - "~/Docker/general/php/php.ini:/usr/local/etc/php/php.ini"
+      - "~/Docker/general/msmtprc:/etc/msmtprc"
       - "~/.ssh:/var/www/.ssh:ro"
-      - "~/Docker/magento/bin/magerun:/usr/local/bin/magerun:ro"
-      - "~/Docker/magento/bin/docker:/usr/local/bin/docker:ro"
+      - "~/Docker/general/bin/magerun:/usr/local/bin/magerun:ro"
+      - "~/Docker/general/bin/docker:/usr/local/bin/docker:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     networks:
       - revproxy
@@ -39,7 +39,7 @@ services:
       - --tmp_table_size=256M
     volumes:
       - "~/Sites:/var/www"
-      - "~/Docker/magento/mariadb/var/lib/mysql:/var/lib/mysql"
+      - "~/Docker/general/mariadb/var/lib/mysql:/var/lib/mysql"
     networks:
       - revproxy
 
@@ -85,8 +85,8 @@ services:
     restart: unless-stopped
     volumes:
       - "~/Sites:/var/www"
-      - "~/Docker/magento/bin/php:/usr/local/bin/php:ro"
-      - "~/Docker/magento/bin/docker:/usr/local/bin/docker:ro"
+      - "~/Docker/general/bin/php:/usr/local/bin/php:ro"
+      - "~/Docker/general/bin/docker:/usr/local/bin/docker:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     networks:
       - revproxy
@@ -110,10 +110,10 @@ services:
       - "443:443"
     volumes:
       - "~/Sites:/var/www"
-      - "~/Docker/magento/nginx/etc/nginx/conf.d:/usr/local/openresty/nginx/conf/conf.d"
-      - "~/Docker/magento/nginx/etc/nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf"
-      - "~/Docker/magento/nginx/etc/nginx/sites-available:/usr/local/openresty/nginx/conf/sites-available"
-      - "~/Docker/magento/nginx/etc/nginx/sites-enabled:/usr/local/openresty/nginx/conf/sites-enabled"
+      - "~/Docker/general/nginx/etc/nginx/conf.d:/usr/local/openresty/nginx/conf/conf.d"
+      - "~/Docker/general/nginx/etc/nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf"
+      - "~/Docker/general/nginx/etc/nginx/sites-available:/usr/local/openresty/nginx/conf/sites-available"
+      - "~/Docker/general/nginx/etc/nginx/sites-enabled:/usr/local/openresty/nginx/conf/sites-enabled"
     networks:
       - revproxy
 
@@ -124,7 +124,7 @@ services:
     ports:
       - "53:53/udp"
     volumes:
-      - "~/Docker/magento/dnsmasq/etc/dnsmasq.conf:/etc/dnsmasq.conf"
+      - "~/Docker/general/dnsmasq/etc/dnsmasq.conf:/etc/dnsmasq.conf"
     cap_add:
       - NET_ADMIN
     networks:
@@ -153,7 +153,7 @@ services:
       MP_SMTP_AUTH_ACCEPT_ANY: "1"
       MP_SMTP_AUTH_ALLOW_INSECURE: "1"
     volumes:
-      - "~/Docker/magento/mailpit/data:/data"
+      - "~/Docker/general/mailpit/data:/data"
     networks:
       - revproxy
 
@@ -165,6 +165,33 @@ services:
       PMA_ARBITRARY: "1"
       PMA_HOST: "mariadb"
       PMA_PORT: "3306"
+    networks:
+      - revproxy
+
+  odoo:
+    image: odoo:18.0
+    container_name: odoo
+    restart: unless-stopped
+    environment:
+      HOST: "postgres"
+      USER: "root"
+      PASSWORD: "root"
+    volumes:
+      - "~/Docker/general/odoo/var/lib/odoo:/var/lib/odoo"
+    depends_on:
+      - postgres
+    networks:
+      - revproxy
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "root"
+      POSTGRES_PASSWORD: "root"
+      POSTGRES_DB: "postgres"
+    volumes:
+      - "~/Docker/general/postgres/var/lib/postgresql/data:/var/lib/postgresql/data"
     networks:
       - revproxy
 

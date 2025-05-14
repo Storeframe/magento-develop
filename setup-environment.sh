@@ -4,7 +4,7 @@
 sudo bash -c 'echo "nameserver 127.0.0.1" > /etc/resolver/test'
 
 # Create Docker Binary
-docker cp dind:/usr/local/bin/docker ~/Docker/magento/bin/docker
+docker cp dind:/usr/local/bin/docker ~/Docker/general/bin/docker
 
 # Function to Create Docker Wrappers
 create_docker_wrapper() {
@@ -12,7 +12,7 @@ create_docker_wrapper() {
     local container="$2"
     local command="$3"
     local target1="/usr/local/bin/$name"
-    local target2="$HOME/Docker/magento/bin/$name"
+    local target2="$HOME/Docker/general/bin/$name"
 
     cat <<EOF | sudo tee $target1 > /dev/null
 #!/bin/bash
@@ -45,7 +45,7 @@ targets=(
 )
 
 # Ensure target directory exists
-mkdir -p "$HOME/Docker/magento/bin"
+mkdir -p "$HOME/Docker/general/bin"
 
 for target in "${targets[@]}"; do
     IFS='|' read -r name container command <<< "$target"
