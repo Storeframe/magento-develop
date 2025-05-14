@@ -1,5 +1,7 @@
 .DS_Store
 .env
-mailpit/data
-mariadb/var
-nginx/etc/nginx/sites-disabled
+nginx/etc/nginx/sites-enabled
+mailpit
+mariadb
+odoo
+postgres

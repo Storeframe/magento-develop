@@ -2,7 +2,7 @@
 
 ## Directory Path (Important!)
 - ~/Sites/ to store multiple Magento2 webshops separated by their respective directory (the directory name will become the domain name followed by .test)
-- ~/Docker/magento to store the root of this repository
+- ~/Docker/general to store the root of this repository
 ```
 For example a project named johndoe situated in ~/Sites/johndoe will be accessible by johndoe.test
 ```
