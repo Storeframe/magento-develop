@@ -4,4 +4,4 @@ nginx/etc/nginx/sites-enabled
 mailpit
 mariadb
 odoo
-postgres
+pg_*
