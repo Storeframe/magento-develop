@@ -177,25 +177,27 @@ services:
     container_name: odoo
     restart: unless-stopped
     environment:
-      HOST: "postgres"
+      HOST: "pg_odoo"
       USER: "root"
       PASSWORD: "root"
     volumes:
       - "~/Docker/general/odoo/var/lib/odoo:/var/lib/odoo"
     depends_on:
-      - postgres
+      - pg_odoo
     networks:
       - revproxy
-  postgres:
+  pg_odoo:
     image: postgres:17
-    container_name: postgres
+    container_name: pg_odoo
     restart: unless-stopped
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_USER: "root"
       POSTGRES_PASSWORD: "root"
       POSTGRES_DB: "postgres"
     volumes:
-      - "~/Docker/general/postgres/var/lib/postgresql/data:/var/lib/postgresql/data"
+      - "~/Docker/general/pg_odoo/var/lib/postgresql/data:/var/lib/postgresql/data"
     networks:
       - revproxy
 
