@@ -201,7 +201,11 @@ services:
     networks:
       - revproxy
   backend:
-    image: frappe/erpnext:v15.62.0
+    image: erpnextshop:latest
+    build:
+      context: .
+      dockerfile: frappe/Dockerfile
+    container_name: backend
     networks:
       - revproxy
     deploy:
@@ -213,28 +217,33 @@ services:
     environment:
       DB_HOST: "db"
       DB_PORT: "3306"
-      MYSQL_ROOT_PASSWORD: "admin"
-      MARIADB_ROOT_PASSWORD: "admin"
+      MYSQL_ROOT_PASSWORD: "root"
+      MARIADB_ROOT_PASSWORD: "root"
 
   configurator:
-    image: frappe/erpnext:v15.62.0
+    image: erpnextshop:latest
+    build:
+      context: .
+      dockerfile: frappe/Dockerfile
     networks:
       - revproxy
     deploy:
       restart_policy:
         condition: none
+    user: frappe
     entrypoint:
       - bash
       - -c
     command:
       - >
-        ls -1 apps > sites/apps.txt;
+        echo "Creating common_site_config.json";
         bench set-config -g db_host $$DB_HOST;
         bench set-config -gp db_port $$DB_PORT;
         bench set-config -g redis_cache "redis://$$REDIS_CACHE";
         bench set-config -g redis_queue "redis://$$REDIS_QUEUE";
         bench set-config -g redis_socketio "redis://$$REDIS_QUEUE";
         bench set-config -gp socketio_port $$SOCKETIO_PORT;
+        echo "Configuration complete";
     environment:
       DB_HOST: "db"
       DB_PORT: "3306"
@@ -246,12 +255,16 @@ services:
       - logs:/home/frappe/frappe-bench/logs
 
   create-site:
-    image: frappe/erpnext:v15.62.0
+    image: erpnextshop:latest
+    build:
+      context: .
+      dockerfile: frappe/Dockerfile
     networks:
       - revproxy
     deploy:
       restart_policy:
         condition: none
+    user: frappe
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
@@ -276,14 +289,15 @@ services:
           fi
         done;
         echo "sites/common_site_config.json found";
-        bench new-site --mariadb-user-host-login-scope='%' --admin-password=admin --db-root-username=root --db-root-password=admin --install-app erpnext --set-default frontend;
+        bench new-site frontend --mariadb-user-host-login-scope='%' --admin-password=admin --db-root-username=root --db-root-password=root --install-app erpnext --install-app payments --install-app webshop --set-default;
 
   db:
     image: mariadb:10.6
+    container_name: db
     networks:
       - revproxy
     healthcheck:
-      test: mysqladmin ping -h localhost --password=admin
+      test: mysqladmin ping -h localhost --password=root
       interval: 1s
       retries: 20
     deploy:
@@ -295,13 +309,16 @@ services:
       - --skip-character-set-client-handshake
       - --skip-innodb-read-only-compressed # Temporary fix for MariaDB 10.6
     environment:
-      MYSQL_ROOT_PASSWORD: "admin"
-      MARIADB_ROOT_PASSWORD: "admin"
+      MYSQL_ROOT_PASSWORD: "root"
+      MARIADB_ROOT_PASSWORD: "root"
     volumes:
       - db-data:/var/lib/mysql
 
   frontend:
-    image: frappe/erpnext:v15.62.0
+    image: erpnextshop:latest
+    build:
+      context: .
+      dockerfile: frappe/Dockerfile
     container_name: frappe
     networks:
       - revproxy
@@ -324,11 +341,15 @@ services:
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
-    ports:
-      - "8080:8080"
+    # ports:
+    #   - "8080:8080"
 
   queue-long:
-    image: frappe/erpnext:v15.62.0
+    image: erpnextshop:latest
+    build:
+      context: .
+      dockerfile: frappe/Dockerfile
+    container_name: queue-long
     networks:
       - revproxy
     deploy:
@@ -344,7 +365,11 @@ services:
       - logs:/home/frappe/frappe-bench/logs
 
   queue-short:
-    image: frappe/erpnext:v15.62.0
+    image: erpnextshop:latest
+    build:
+      context: .
+      dockerfile: frappe/Dockerfile
+    container_name: queue-short
     networks:
       - revproxy
     deploy:
@@ -361,6 +386,7 @@ services:
 
   redis-queue:
     image: redis:6.2-alpine
+    container_name: redis-queue
     networks:
       - revproxy
     deploy:
@@ -371,6 +397,7 @@ services:
 
   redis-cache:
     image: redis:6.2-alpine
+    container_name: redis-cache
     networks:
       - revproxy
     deploy:
@@ -378,7 +405,11 @@ services:
         condition: on-failure
 
   scheduler:
-    image: frappe/erpnext:v15.62.0
+    image: erpnextshop:latest
+    build:
+      context: .
+      dockerfile: frappe/Dockerfile
+    container_name: scheduler
     networks:
       - revproxy
     deploy:
@@ -392,7 +423,11 @@ services:
       - logs:/home/frappe/frappe-bench/logs
 
   websocket:
-    image: frappe/erpnext:v15.62.0
+    image: erpnextshop:latest
+    build:
+      context: .
+      dockerfile: frappe/Dockerfile
+    container_name: websocket
     networks:
       - revproxy
     deploy:
