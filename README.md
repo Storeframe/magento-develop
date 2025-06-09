@@ -7,6 +7,11 @@
 For example a project named johndoe situated in ~/Sites/johndoe will be accessible by johndoe.test
 ```
 
+## Ensure Environment is Ready Checklist
+```
+~/Docker/general
+Chrome Settings DNS Provider to OS Default
+```
 ## Initialize setup-environment.sh
 ```
 sudo sh setup-environment.sh
@@ -26,6 +31,7 @@ docker compose up -d
 
 ### DNSMasq Local Resolver
 ```
+sudo mkdir -p /etc/resolver
 sudo bash -c 'echo "nameserver 127.0.0.1" > /etc/resolver/test'
 ```
 ### php (/usr/local/bin/php)
