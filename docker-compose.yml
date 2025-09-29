@@ -47,23 +47,23 @@ services:
     networks:
       - revproxy
 
-  elasticsearch:
-    image: "storeframe/elasticsearch:${ELASTICSEARCH_VERSION}"
-    container_name: elasticsearch
-    restart: unless-stopped
-    # ports:
-    #   - "9200:9200"
-    #   - "9300:9300"
-    environment:
-      - discovery.type=single-node
-      - cluster.routing.allocation.disk.threshold_enabled=false
-      - indices.id_field_data.enabled=true
-      - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
-    tmpfs:
-      - "/tmp:rw"
-    networks:
-      - revproxy
+#  elasticsearch:
+#     image: "storeframe/elasticsearch:${ELASTICSEARCH_VERSION}"
+#     container_name: elasticsearch
+#     restart: unless-stopped
+#     # ports:
+#     #   - "9200:9200"
+#     #   - "9300:9300"
+#     environment:
+#       - discovery.type=single-node
+#       - cluster.routing.allocation.disk.threshold_enabled=false
+#       - indices.id_field_data.enabled=true
+#       - xpack.security.enabled=false
+#       - ES_JAVA_OPTS=-Xms1g -Xmx1g
+#     tmpfs:
+#       - "/tmp:rw"
+#     networks:
+#       - revproxy
 
   opensearch:
     image: "storeframe/opensearch:${OPENSEARCH_VERSION}"
@@ -92,15 +92,6 @@ services:
       - "~/Docker/general/bin/php:/usr/local/bin/php:ro"
       - "~/Docker/general/bin/docker:/usr/local/bin/docker:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-    networks:
-      - revproxy
-
-  redis:
-    image: "redis:${REDIS_VERSION}-alpine"
-    container_name: redis
-    restart: unless-stopped
-    tmpfs:
-      - "/data:rw"
     networks:
       - revproxy
 
@@ -156,6 +147,9 @@ services:
       MP_DATA_FILE: "/data/mailpit.db"
       MP_SMTP_AUTH_ACCEPT_ANY: "1"
       MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "1025:1025"
+      - "8025:8025"
     volumes:
       - "~/Docker/general/mailpit/data:/data"
     networks:
