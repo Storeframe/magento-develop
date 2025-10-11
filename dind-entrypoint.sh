@@ -29,8 +29,17 @@ fi
 # Copy binary if needed
 if [ "$NEED_UPDATE" = "1" ]; then
     echo "Copying docker binary to shared volume..."
+    
+    # Remove target (handles both file and directory - WSL compatibility)
+    rm -rf /shared-bin/docker
+    
+    # Copy fresh binary
     cp /usr/local/bin/docker /shared-bin/docker
+    
+    # Set proper permissions (cross-platform compatible)
     chmod 755 /shared-bin/docker
+    
+    # Verify
     UPDATED_VERSION=$(/shared-bin/docker --version)
     echo "Docker binary updated: $UPDATED_VERSION"
 fi
