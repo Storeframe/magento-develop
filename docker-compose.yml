@@ -4,13 +4,15 @@ services:
     container_name: php
     restart: unless-stopped
     user: root # Fix permission issue
+    depends_on:
+      - dind
     volumes:
       - "~/Sites:/var/www"
       - "~/Docker/general/php/php.ini:/usr/local/etc/php/php.ini"
       - "~/Docker/general/msmtprc:/etc/msmtprc"
       - "~/.ssh:/var/www/.ssh:ro"
       - "~/Docker/general/bin/magerun:/usr/local/bin/magerun:ro"
-      - "~/Docker/general/bin/docker:/usr/local/bin/docker:ro"
+      - "~/Docker/general/docker-bin/docker:/usr/local/bin/docker:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "~/Docker/general/bin/npm:/usr/local/bin/npm"
       - "~/Docker/general/bin/mysql:/usr/local/bin/mysql"
@@ -88,10 +90,12 @@ services:
     container_name: nodejs
     restart: unless-stopped
     user: root
+    depends_on:
+      - dind
     volumes:
       - "~/Sites:/var/www"
       - "~/Docker/general/bin/php:/usr/local/bin/php:ro"
-      - "~/Docker/general/bin/docker:/usr/local/bin/docker:ro"
+      - "~/Docker/general/docker-bin/docker:/usr/local/bin/docker:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     networks:
       - revproxy
@@ -126,7 +130,8 @@ services:
     networks:
       - revproxy
 
-# DIND is being used to copy the docker binary to the general bin folder
+# DIND automatically distributes docker binary via shared volume
+# The dind-entrypoint.sh ensures binary is always up-to-date with image version
   dind:
     image: "docker:dind"
     container_name: dind
@@ -134,7 +139,11 @@ services:
     privileged: true
     ports:
       - "2375:2375"
-    command: dockerd --host=tcp://0.0.0.0:2375 --host=unix:///var/run/docker.sock
+    volumes:
+      - "~/Docker/general/docker-bin:/shared-bin"
+      - "~/Docker/general/dind-entrypoint.sh:/usr/local/bin/custom-entrypoint.sh:ro"
+    entrypoint: ["/usr/local/bin/custom-entrypoint.sh"]
+    command: ["dockerd", "--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock"]
     environment:
       - DOCKER_TLS_CERTDIR=""
     networks:

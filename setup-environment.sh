@@ -3,13 +3,9 @@
 # Set DNSMasq Local Resolver
 sudo bash -c 'echo "nameserver 127.0.0.1" > /etc/resolver/test'
 
-# Create Docker Binary if it doesn't exist
-if [ ! -f ~/Docker/general/bin/docker ]; then
-    echo "Docker binary not found, copying from dind container..."
-    docker cp dind:/usr/local/bin/docker ~/Docker/general/bin/docker
-    chmod +x ~/Docker/general/bin/docker
-    echo "Docker binary created successfully."
-fi
+# Docker binary is now automatically managed via docker-compose volumes
+# No manual binary creation needed - it's handled by dind-entrypoint.sh
+echo "Docker binary is automatically managed by dind container"
 
 # Function to Create Docker Wrappers
 create_docker_wrapper() {
