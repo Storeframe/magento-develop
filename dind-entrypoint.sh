@@ -30,7 +30,7 @@ fi
 if [ "$NEED_UPDATE" = "1" ]; then
     echo "Copying docker binary to shared volume..."
     cp /usr/local/bin/docker /shared-bin/docker
-    chmod +x /shared-bin/docker
+    chmod 755 /shared-bin/docker
     UPDATED_VERSION=$(/shared-bin/docker --version)
     echo "Docker binary updated: $UPDATED_VERSION"
 fi
