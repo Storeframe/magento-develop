@@ -3,8 +3,13 @@
 # Set DNSMasq Local Resolver
 sudo bash -c 'echo "nameserver 127.0.0.1" > /etc/resolver/test'
 
-# Create Docker Binary
-docker cp dind:/usr/local/bin/docker ~/Docker/general/bin/docker
+# Create Docker Binary if it doesn't exist
+if [ ! -f ~/Docker/general/bin/docker ]; then
+    echo "Docker binary not found, copying from dind container..."
+    docker cp dind:/usr/local/bin/docker ~/Docker/general/bin/docker
+    chmod +x ~/Docker/general/bin/docker
+    echo "Docker binary created successfully."
+fi
 
 # Function to Create Docker Wrappers
 create_docker_wrapper() {

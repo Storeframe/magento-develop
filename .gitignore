@@ -5,3 +5,4 @@ mailpit
 mariadb
 odoo
 pg_*
+bin/docker
