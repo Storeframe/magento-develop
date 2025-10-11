@@ -87,6 +87,7 @@ services:
     image: "storeframe/nodejs:${NODEJS_VERSION}"
     container_name: nodejs
     restart: unless-stopped
+    user: root
     volumes:
       - "~/Sites:/var/www"
       - "~/Docker/general/bin/php:/usr/local/bin/php:ro"
@@ -125,6 +126,7 @@ services:
     networks:
       - revproxy
 
+# DIND is being used to copy the docker binary to the general bin folder
   dind:
     image: "docker:dind"
     container_name: dind
