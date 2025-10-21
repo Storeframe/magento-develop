@@ -3,7 +3,7 @@ services:
     image: "storeframe/php:${PHP_VERSION}"
     container_name: php
     restart: unless-stopped
-    user: root # Fix permission issue
+    user: root # Required for docker socket access and cross-platform file permissions
     depends_on:
       - dind
     volumes:
@@ -17,6 +17,7 @@ services:
       - "~/Docker/general/bin/npm:/usr/local/bin/npm"
       - "~/Docker/general/bin/mysql:/usr/local/bin/mysql"
       - "~/Docker/general/bin/mysqldump:/usr/local/bin/mysqldump"
+      - "~/Docker/general/php/php-fpm.d/www.conf:/usr/local/etc/php-fpm.d/www.conf"
     networks:
       - revproxy
 
@@ -89,7 +90,7 @@ services:
     image: "storeframe/nodejs:${NODEJS_VERSION}"
     container_name: nodejs
     restart: unless-stopped
-    user: root
+    user: root # Required for docker socket access and cross-platform file permissions
     depends_on:
       - dind
     volumes:
@@ -104,7 +105,7 @@ services:
     image: "storeframe/nginx:${NGINX_VERSION}"
     container_name: nginx
     restart: unless-stopped
-    user: root
+    user: root # Required for cross-platform file permissions
     ports:
       - "80:80"
       - "443:443"
