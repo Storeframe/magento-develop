@@ -6,12 +6,14 @@ services:
     user: root # Required for docker socket access and cross-platform file permissions
     depends_on:
       - dind
+    entrypoint: ["/usr/local/bin/php-entrypoint.sh"]
+    command: ["php-fpm"]
     volumes:
       - "~/Sites:/var/www"
       - "~/Docker/general/php/php.ini:/usr/local/etc/php/php.ini"
       - "~/Docker/general/msmtprc:/etc/msmtprc"
       - "~/.ssh:/var/www/.ssh:ro"
-      - "~/Docker/general/bin/magerun:/usr/local/bin/magerun:ro"
+      - "~/Docker/general/php/php-entrypoint.sh:/usr/local/bin/php-entrypoint.sh:ro"
       - "~/Docker/general/docker-bin/docker:/usr/local/bin/docker:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "~/Docker/general/bin/npm:/usr/local/bin/npm"

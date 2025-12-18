@@ -34,7 +34,6 @@ EOF
 targets=(
     "php|php|php -d memory_limit=-1"
     "composer|php|php -d memory_limit=-1 /usr/local/bin/composer"
-    "magerun|php|magerun"
     "msmtp|php|msmtp"
     "nginx|nginx|nginx"
     "redis-cli|redis|redis-cli"
