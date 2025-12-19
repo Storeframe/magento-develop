@@ -53,8 +53,8 @@ EOF
 
 # Create Docker Wrapper Scripts
 # Format: name|container|command|user
-# PHP-related commands use 'app' user (matches Dockerfile and www.conf)
-# Other commands use 'root' (check their Dockerfiles for internal user setup)
+# Commands that access /var/www use 'app' user for consistency and shared volume compatibility
+# Database commands (mysql/mysqldump) use 'root' since mariadb container doesn't have 'app' user
 
 # Ensure target directory exists
 mkdir -p "$HOME/Docker/general/bin"
@@ -70,15 +70,18 @@ process_wrapper() {
 }
 
 # Create wrapper scripts
+# Use 'app' user for all commands that access /var/www volume for consistency
 process_wrapper "php" "php" "php -d memory_limit=-1" "app"
 process_wrapper "composer" "php" "php -d memory_limit=-1 /usr/local/bin/composer" "app"
 process_wrapper "msmtp" "php" "msmtp" "app"
-process_wrapper "nginx" "nginx" "nginx" "root"
-process_wrapper "redis-cli" "redis" "redis-cli" "root"
+process_wrapper "nginx" "nginx" "nginx" "app"
+process_wrapper "nodejs" "nodejs" "nodejs" "app"
+process_wrapper "npm" "nodejs" "npm" "app"
+process_wrapper "grunt" "nodejs" "grunt" "app"
+# Database commands - mariadb doesn't have 'app' user, keep as root
 process_wrapper "mysql" "mariadb" "mysql" "root"
 process_wrapper "mysqldump" "mariadb" "mysqldump" "root"
-process_wrapper "nodejs" "nodejs" "nodejs" "root"
-process_wrapper "npm" "nodejs" "npm" "root"
-process_wrapper "grunt" "nodejs" "grunt" "root"
+# Redis - doesn't access /var/www, keep as root
+process_wrapper "redis-cli" "redis" "redis-cli" "root"
 
 echo "All configurations have been applied successfully."

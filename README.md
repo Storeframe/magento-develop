@@ -40,8 +40,8 @@ sudo sh setup-environment.sh
 This will:
 - Set up DNSMasq resolver
 - Create/update bin wrapper scripts (`/usr/local/bin/php`, `/usr/local/bin/composer`, etc.)
-- Configure PHP-related commands to use `app` user
-- Configure other commands to use `root` user
+- Configure commands that access `/var/www` to use `app` user (PHP, NodeJS, Nginx) for shared volume compatibility
+- Configure database commands (mysql/mysqldump) to use `root` user (mariadb container doesn't have `app` user)
 
 ### 3. Start Docker Containers
 ```bash
@@ -50,6 +50,13 @@ docker compose up -d
 ```
 
 The PHP container will automatically fix permissions for `/var/www` on startup.
+
+**Important:** Commands that access `/var/www` (PHP, NodeJS, Nginx) all use `app` user to ensure consistent file ownership. This prevents permission issues when:
+- Running Magento grunt tasks (NodeJS) that create files PHP needs to access
+- PHP creating files that grunt/npm need to modify
+- Nginx CLI commands accessing project files
+
+Database commands (mysql/mysqldump) use `root` since the mariadb container doesn't have `app` user, but they don't write to `/var/www` anyway.
 
 ## Updating Existing Setup (After Code Changes)
 
