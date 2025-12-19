@@ -23,11 +23,6 @@
             echo "=== Warning: Magerun installation may have failed ==="
         fi
     fi
-    
-    # Ensure magerun2 alias exists (points to magerun wrapper)
-    if [ ! -f "/usr/local/bin/magerun2" ] && [ -f "/usr/local/bin/magerun" ]; then
-        ln -sf /usr/local/bin/magerun /usr/local/bin/magerun2 2>/dev/null || true
-    fi
 ) &
 
 # Fix permissions for /var/www to ensure app user can read/write
