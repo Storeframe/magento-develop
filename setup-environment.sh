@@ -73,6 +73,8 @@ process_wrapper() {
 # PHP container commands - use 'app' user (matches PHP-FPM user for file ownership)
 process_wrapper "php" "php" "php -d memory_limit=-1" "app"
 process_wrapper "composer" "php" "php -d memory_limit=-1 /usr/local/bin/composer" "app"
+process_wrapper "magerun" "php" "magerun" "app"
+process_wrapper "magerun2" "php" "magerun2" "app"
 process_wrapper "msmtp" "php" "msmtp" "app"
 # NodeJS container commands - use 'root' for Docker socket access
 # Grunt exec tasks use docker to run PHP commands (requires socket access)
