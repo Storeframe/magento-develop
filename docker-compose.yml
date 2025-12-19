@@ -3,7 +3,9 @@ services:
     image: "storeframe/php:${PHP_VERSION}"
     container_name: php
     restart: unless-stopped
-    user: root # Required for docker socket access and cross-platform file permissions
+    # Run as root for: 1) docker socket access, 2) permission fixing in entrypoint
+    # PHP-FPM child processes run as 'app' user (configured in www.conf)
+    user: root
     depends_on:
       - dind
     entrypoint: ["/usr/local/bin/php-entrypoint.sh"]
@@ -92,7 +94,9 @@ services:
     image: "storeframe/nodejs:${NODEJS_VERSION}"
     container_name: nodejs
     restart: unless-stopped
-    user: root # Required for docker socket access and cross-platform file permissions
+    # Run as root for: 1) docker socket access, 2) cross-platform file permissions
+    # Node processes typically run as non-root user internally (check Dockerfile)
+    user: root
     depends_on:
       - dind
     volumes:
@@ -107,7 +111,9 @@ services:
     image: "storeframe/nginx:${NGINX_VERSION}"
     container_name: nginx
     restart: unless-stopped
-    user: root # Required for cross-platform file permissions
+    # Run as root for: 1) binding to ports 80/443, 2) cross-platform file permissions
+    # Nginx worker processes typically run as non-root user internally (check Dockerfile)
+    user: root
     ports:
       - "80:80"
       - "443:443"
@@ -179,6 +185,26 @@ services:
       PMA_PORT: "3306"
     networks:
       - revproxy
+
+  # Watchtower - Auto-update containers (OPTIONAL - See README for details)
+  # Uncomment to enable automatic container updates
+  # watchtower:
+  #   image: containrrr/watchtower
+  #   container_name: watchtower
+  #   restart: unless-stopped
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #   environment:
+  #     - WATCHTOWER_CLEANUP=true
+  #     - WATCHTOWER_INCLUDE_STOPPED=true
+  #     - WATCHTOWER_POLL_INTERVAL=3600
+  #     - WATCHTOWER_SCHEDULE=0 2 * * *  # Daily at 2 AM
+  #     # Exclude containers that should NOT be auto-updated
+  #     - WATCHTOWER_LABEL_ENABLE=false
+  #   # Only update containers with watchtower.enable=true label
+  #   command: --label-enable --interval 3600
+  #   networks:
+  #     - revproxy
 
 networks:
   revproxy:

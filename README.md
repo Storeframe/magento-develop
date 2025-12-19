@@ -12,10 +12,57 @@ For example a project named johndoe situated in ~/Sites/johndoe will be accessib
 ~/Docker/general
 Chrome Settings DNS Provider to OS Default
 ```
-## Initialize setup-environment.sh
+
+## Initial Setup (First Time)
+
+### 1. Clone/Get the Repository
+```bash
+cd ~/Docker
+git clone <repository-url> general
+# OR if already exists, pull latest changes:
+cd ~/Docker/general
+git pull
 ```
+
+### 2. Initialize Environment
+```bash
+cd ~/Docker/general
 sudo sh setup-environment.sh
 ```
+
+This will:
+- Set up DNSMasq resolver
+- Create/update bin wrapper scripts (`/usr/local/bin/php`, `/usr/local/bin/composer`, etc.)
+- Configure PHP-related commands to use `app` user
+- Configure other commands to use `root` user
+
+### 3. Start Docker Containers
+```bash
+cd ~/Docker/general
+docker compose up -d
+```
+
+The PHP container will automatically fix permissions for `/var/www` on startup.
+
+## Updating Existing Setup (After Code Changes)
+
+If you already have the environment set up and want to apply updates:
+
+```bash
+cd ~/Docker/general
+
+# 1. Pull latest changes
+git pull
+
+# 2. Update bin wrapper scripts (if setup-environment.sh was modified)
+sudo sh setup-environment.sh
+
+# 3. Restart containers to apply new configurations
+docker compose down
+docker compose up -d
+```
+
+**Note:** The permission fix runs automatically on every container start, so restarting containers will apply any permission fixes needed.
 ## To Start and Stop Docker Compose
 ```
 docker compose up -d
@@ -29,25 +76,77 @@ nano .env # change the containers version accordingly
 docker compose up -d
 ```
 
+## Auto-Updating Containers with Watchtower (Optional)
+
+Watchtower can automatically update containers when new images are available. **For development environments, this is generally NOT recommended** because:
+
+- Containers may restart unexpectedly during work
+- Different developers may have different versions
+- Breaking changes can disrupt workflow
+- Less control over when updates happen
+
+### If You Want to Enable Watchtower:
+
+1. **Uncomment the watchtower service** in `docker-compose.yml`
+
+2. **Configure update schedule** (default: daily at 2 AM):
+   ```yaml
+   WATCHTOWER_SCHEDULE=0 2 * * *  # Cron format
+   ```
+
+3. **Use label-based updates** (recommended):
+   Add `com.centurylinklabs.watchtower.enable=true` label to containers you want auto-updated:
+   ```yaml
+   services:
+     php:
+       labels:
+         - "com.centurylinklabs.watchtower.enable=true"
+   ```
+
+4. **Start watchtower**:
+   ```bash
+   docker compose up -d watchtower
+   ```
+
+### Recommended Approach (Manual Updates):
+
+Instead of Watchtower, use manual updates via `.env` file:
+
+```bash
+# 1. Update versions in .env file
+nano .env
+
+# 2. Pull new images
+docker compose pull
+
+# 3. Restart containers
+docker compose up -d
+```
+
+This gives you:
+- Control over when updates happen
+- Consistent versions across team
+- Ability to test updates before applying
+
 ### DNSMasq Local Resolver
 ```
 sudo mkdir -p /etc/resolver
 sudo bash -c 'echo "nameserver 127.0.0.1" > /etc/resolver/test'
 ```
 ### php (/usr/local/bin/php)
-```
+```bash
 #!/bin/bash
 current_dir=$(basename "$(pwd)")
-docker exec -i -w "/var/www/$current_dir" php php -d memory_limit=-1 "$@"
+docker exec -uapp -i -w "/var/www/$current_dir" php php -d memory_limit=-1 "$@"
 ```
 ```
 sudo chmod +x /usr/local/bin/php
 ```
 ### composer (/usr/local/bin/composer)
-```
+```bash
 #!/bin/bash
 current_dir=$(basename "$(pwd)")
-docker exec -i -w "/var/www/$current_dir" php php -d memory_limit=-1 /usr/local/bin/composer "$@"
+docker exec -uapp -i -w "/var/www/$current_dir" php php -d memory_limit=-1 /usr/local/bin/composer "$@"
 ```
 ```
 sudo chmod +x /usr/local/bin/composer
