@@ -1,4 +1,3 @@
 #!/bin/bash
-# Run as root for Docker socket access
 current_dir=$(basename "$(pwd)")
 docker exec -uroot -i -w "/var/www/$current_dir" nodejs nodejs "$@"

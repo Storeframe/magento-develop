@@ -1,4 +1,3 @@
 #!/bin/bash
-# Run as root for Docker socket access (grunt exec tasks use docker to run PHP commands)
 current_dir=$(basename "$(pwd)")
 docker exec -uroot -i -w "/var/www/$current_dir" nodejs grunt "$@"
