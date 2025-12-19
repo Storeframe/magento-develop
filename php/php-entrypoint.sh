@@ -5,23 +5,26 @@
 # Fixes permissions for cross-platform compatibility (Mac/WSL)
 # =============================================================================
 
-# Install/Ensure magerun is available
+# Install/Ensure magerun is available for both root and app user
 # This runs on every container start to ensure magerun is always available
 # Run in background to avoid blocking PHP-FPM startup
 (
-    # Check if the actual binary file exists (not just the wrapper script)
+    # Install for root user (for direct container access)
     if [ ! -f "/root/.composer/vendor/n98/magerun2-dist/n98-magerun2" ]; then
-        echo "=== Installing magerun ==="
-        # Install magerun globally for root user
+        echo "=== Installing magerun for root ==="
         composer global require n98/magerun2-dist --dev --no-interaction 2>&1 | grep -v "Warning\|Deprecated" || true
-        
-        # Verify installation
-        if [ -f "/root/.composer/vendor/n98/magerun2-dist/n98-magerun2" ]; then
-            echo "=== Magerun installed successfully ==="
-            chmod +x /root/.composer/vendor/n98/magerun2-dist/n98-magerun2 2>/dev/null || true
-        else
-            echo "=== Warning: Magerun installation may have failed ==="
-        fi
+        chmod +x /root/.composer/vendor/n98/magerun2-dist/n98-magerun2 2>/dev/null || true
+    fi
+    
+    # Install for app user (for wrapper scripts that run as -uapp)
+    if [ ! -f "/var/www/.composer/vendor/n98/magerun2-dist/n98-magerun2" ]; then
+        echo "=== Installing magerun for app user ==="
+        # Ensure .composer directory exists with proper permissions
+        mkdir -p /var/www/.composer
+        chown app:app /var/www/.composer 2>/dev/null || true
+        # Run composer as app user
+        su -s /bin/bash app -c "composer global require n98/magerun2-dist --dev --no-interaction" 2>&1 | grep -v "Warning\|Deprecated" || true
+        chmod +x /var/www/.composer/vendor/n98/magerun2-dist/n98-magerun2 2>/dev/null || true
     fi
 ) &
 
