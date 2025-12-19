@@ -1,7 +1,25 @@
 #!/bin/bash
 
-# Set DNSMasq Local Resolver
-sudo bash -c 'echo "nameserver 127.0.0.1" > /etc/resolver/test'
+# Ensure script runs with bash (required for some features)
+# If executed with 'sh', re-execute with bash
+if [ -z "$BASH_VERSION" ]; then
+    exec bash "$0" "$@"
+fi
+
+# Set DNSMasq Local Resolver (Mac-specific)
+# WSL uses systemd-resolved or /etc/resolv.conf, DNSMasq setup differs
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    sudo mkdir -p /etc/resolver
+    sudo bash -c 'echo "nameserver 127.0.0.1" > /etc/resolver/test'
+    echo "DNSMasq resolver configured for macOS"
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # Linux/WSL - DNSMasq typically runs on port 53, system handles resolution
+    echo "DNSMasq resolver: WSL/Linux uses system DNS resolution"
+    echo "Ensure DNSMasq container is running and port 53 is accessible"
+else
+    echo "Warning: Unknown OS type, skipping DNSMasq resolver setup"
+fi
 
 # Docker binary is now automatically managed via docker-compose volumes
 # No manual binary creation needed - it's handled by dind-entrypoint.sh
@@ -37,25 +55,30 @@ EOF
 # Format: name|container|command|user
 # PHP-related commands use 'app' user (matches Dockerfile and www.conf)
 # Other commands use 'root' (check their Dockerfiles for internal user setup)
-targets=(
-    "php|php|php -d memory_limit=-1|app"
-    "composer|php|php -d memory_limit=-1 /usr/local/bin/composer|app"
-    "msmtp|php|msmtp|app"
-    "nginx|nginx|nginx|root"
-    "redis-cli|redis|redis-cli|root"
-    "mysql|mariadb|mysql|root"
-    "mysqldump|mariadb|mysqldump|root"
-    "nodejs|nodejs|nodejs|root"
-    "npm|nodejs|npm|root"
-    "grunt|nodejs|grunt|root"
-)
 
 # Ensure target directory exists
 mkdir -p "$HOME/Docker/general/bin"
 
-for target in "${targets[@]}"; do
-    IFS='|' read -r name container command user <<< "$target"
+# Process each wrapper script definition
+# Using a function to avoid array syntax issues in some shells
+process_wrapper() {
+    local name="$1"
+    local container="$2"
+    local command="$3"
+    local user="${4:-root}"
     create_docker_wrapper "$name" "$container" "$command" "$user"
-done
+}
+
+# Create wrapper scripts
+process_wrapper "php" "php" "php -d memory_limit=-1" "app"
+process_wrapper "composer" "php" "php -d memory_limit=-1 /usr/local/bin/composer" "app"
+process_wrapper "msmtp" "php" "msmtp" "app"
+process_wrapper "nginx" "nginx" "nginx" "root"
+process_wrapper "redis-cli" "redis" "redis-cli" "root"
+process_wrapper "mysql" "mariadb" "mysql" "root"
+process_wrapper "mysqldump" "mariadb" "mysqldump" "root"
+process_wrapper "nodejs" "nodejs" "nodejs" "root"
+process_wrapper "npm" "nodejs" "npm" "root"
+process_wrapper "grunt" "nodejs" "grunt" "root"
 
 echo "All configurations have been applied successfully."

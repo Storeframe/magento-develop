@@ -30,6 +30,13 @@ cd ~/Docker/general
 sudo sh setup-environment.sh
 ```
 
+**Note:** The script automatically detects if it's run with `sh` and re-executes with `bash` for compatibility.
+
+**Note for WSL Users:**
+- The script detects WSL/Linux automatically
+- DNSMasq setup differs on WSL (uses system DNS resolution)
+- Script works with both `sh setup-environment.sh` and `bash setup-environment.sh`
+
 This will:
 - Set up DNSMasq resolver
 - Create/update bin wrapper scripts (`/usr/local/bin/php`, `/usr/local/bin/composer`, etc.)
