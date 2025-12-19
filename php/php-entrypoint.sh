@@ -5,6 +5,31 @@
 # Fixes permissions for cross-platform compatibility (Mac/WSL)
 # =============================================================================
 
+# Install/Ensure magerun is available
+# This runs on every container start to ensure magerun is always available
+# Run in background to avoid blocking PHP-FPM startup
+(
+    # Check if the actual binary file exists (not just the wrapper script)
+    if [ ! -f "/root/.composer/vendor/n98/magerun2-dist/n98-magerun2" ]; then
+        echo "=== Installing magerun ==="
+        # Install magerun globally for root user
+        composer global require n98/magerun2-dist --dev --no-interaction 2>&1 | grep -v "Warning\|Deprecated" || true
+        
+        # Verify installation
+        if [ -f "/root/.composer/vendor/n98/magerun2-dist/n98-magerun2" ]; then
+            echo "=== Magerun installed successfully ==="
+            chmod +x /root/.composer/vendor/n98/magerun2-dist/n98-magerun2 2>/dev/null || true
+        else
+            echo "=== Warning: Magerun installation may have failed ==="
+        fi
+    fi
+    
+    # Ensure magerun2 alias exists (points to magerun wrapper)
+    if [ ! -f "/usr/local/bin/magerun2" ] && [ -f "/usr/local/bin/magerun" ]; then
+        ln -sf /usr/local/bin/magerun /usr/local/bin/magerun2 2>/dev/null || true
+    fi
+) &
+
 # Fix permissions for /var/www to ensure app user can read/write
 # This runs on every container start to handle files created by host or root
 # Run in background to avoid blocking PHP-FPM startup
