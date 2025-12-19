@@ -70,14 +70,17 @@ process_wrapper() {
 }
 
 # Create wrapper scripts
-# Use 'app' user for all commands that access /var/www volume for consistency
+# PHP container commands - use 'app' user (matches PHP-FPM user for file ownership)
 process_wrapper "php" "php" "php -d memory_limit=-1" "app"
 process_wrapper "composer" "php" "php -d memory_limit=-1 /usr/local/bin/composer" "app"
 process_wrapper "msmtp" "php" "msmtp" "app"
+# NodeJS container commands - use 'root' for Docker socket access
+# Grunt exec tasks use docker to run PHP commands (requires socket access)
+process_wrapper "nodejs" "nodejs" "nodejs" "root"
+process_wrapper "npm" "nodejs" "npm" "root"
+process_wrapper "grunt" "nodejs" "grunt" "root"
+# Nginx - use 'app' for consistency
 process_wrapper "nginx" "nginx" "nginx" "app"
-process_wrapper "nodejs" "nodejs" "nodejs" "app"
-process_wrapper "npm" "nodejs" "npm" "app"
-process_wrapper "grunt" "nodejs" "grunt" "app"
 # Database commands - mariadb doesn't have 'app' user, keep as root
 process_wrapper "mysql" "mariadb" "mysql" "root"
 process_wrapper "mysqldump" "mariadb" "mysqldump" "root"

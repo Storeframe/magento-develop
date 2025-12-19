@@ -1,3 +1,4 @@
 #!/bin/bash
+# Run as root for Docker socket access
 current_dir=$(basename "$(pwd)")
-docker exec -uapp -i -w "/var/www/$current_dir" nodejs npm "$@"
+docker exec -uroot -i -w "/var/www/$current_dir" nodejs npm "$@"
