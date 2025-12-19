@@ -1,3 +1,3 @@
 #!/bin/bash
 current_dir=$(basename "$(pwd)")
-docker exec -uapp -i -w "/var/www/$current_dir" php magerun "$@"
+docker exec -uapp -i -w "/var/www/$current_dir" php magerun2 "$@"

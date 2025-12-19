@@ -26,6 +26,12 @@
         su -s /bin/bash app -c "composer global require n98/magerun2-dist --dev --no-interaction" 2>&1 | grep -v "Warning\|Deprecated" || true
         chmod +x /var/www/.composer/vendor/n98/magerun2-dist/n98-magerun2 2>/dev/null || true
     fi
+    
+    # Create magerun2 symlink for MCP tools and other tools that call magerun2 directly
+    if [ -f "/usr/local/bin/magerun" ] && [ ! -f "/usr/local/bin/magerun2" ]; then
+        ln -sf /usr/local/bin/magerun /usr/local/bin/magerun2 2>/dev/null || true
+        chmod +x /usr/local/bin/magerun2 2>/dev/null || true
+    fi
 ) &
 
 # Fix permissions for /var/www to ensure app user can read/write
