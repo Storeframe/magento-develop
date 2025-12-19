@@ -46,21 +46,40 @@ The PHP container will automatically fix permissions for `/var/www` on startup.
 
 ## Updating Existing Setup (After Code Changes)
 
-If you already have the environment set up and want to apply updates:
+### Quick Update (Most Common)
+
+If you just need to pull changes and restart containers:
 
 ```bash
 cd ~/Docker/general
-
-# 1. Pull latest changes
 git pull
-
-# 2. Update bin wrapper scripts (if setup-environment.sh was modified)
-sudo sh setup-environment.sh
-
-# 3. Restart containers to apply new configurations
 docker compose down
 docker compose up -d
 ```
+
+This works when:
+- `docker-compose.yml` changed
+- Entrypoint scripts changed (`php-entrypoint.sh`, etc.)
+- Config files changed (`www.conf`, `php.ini`, etc.)
+
+### Full Update (When Bin Scripts Changed)
+
+If `bin/*` scripts or `setup-environment.sh` changed, you also need to update wrapper scripts:
+
+```bash
+cd ~/Docker/general
+git pull
+sudo sh setup-environment.sh  # Updates /usr/local/bin/* scripts
+docker compose down
+docker compose up -d
+```
+
+**When is `setup-environment.sh` needed?**
+- When `bin/*` files changed (php, composer, magerun, etc.)
+- When `setup-environment.sh` itself changed
+- After first-time setup
+
+**Note:** Running `setup-environment.sh` is safe even if nothing changed (idempotent), so you can always run it to be sure.
 
 **Note:** The permission fix runs automatically on every container start, so restarting containers will apply any permission fixes needed.
 ## To Start and Stop Docker Compose
