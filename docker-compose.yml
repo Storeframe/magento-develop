@@ -150,7 +150,7 @@ services:
       - "2375:2375"
     volumes:
       - "~/Docker/general/docker-bin:/shared-bin"
-      - "~/Docker/general/dind-entrypoint.sh:/usr/local/bin/custom-entrypoint.sh:ro"
+      - "~/Docker/general/dind/dind-entrypoint.sh:/usr/local/bin/custom-entrypoint.sh:ro"
     entrypoint: ["/usr/local/bin/custom-entrypoint.sh"]
     command: ["dockerd", "--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock"]
     environment:
