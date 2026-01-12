@@ -1,3 +1,11 @@
 #!/bin/bash
-current_dir=$(basename "$(pwd)")
-docker exec -uapp -i -w "/var/www/$current_dir" nginx nginx "$@"
+project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
+
+# Try nginx-{project} first, fallback to nginx
+if docker ps --format '{{.Names}}' | grep -q "^nginx-${project}$"; then
+    container="nginx-$project"
+else
+    container="nginx"
+fi
+
+docker exec -uapp -i -w "/var/www/$project" "$container" nginx "$@"

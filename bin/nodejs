@@ -1,3 +1,11 @@
 #!/bin/bash
-current_dir=$(basename "$(pwd)")
-docker exec -uroot -i -w "/var/www/$current_dir" nodejs nodejs "$@"
+project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
+
+# Try nodejs-{project} first, fallback to nodejs
+if docker ps --format '{{.Names}}' | grep -q "^nodejs-${project}$"; then
+    container="nodejs-$project"
+else
+    container="nodejs"
+fi
+
+docker exec -uroot -i -w "/var/www/$project" "$container" node "$@"

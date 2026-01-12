@@ -25,68 +25,218 @@ fi
 # No manual binary creation needed - it's handled by dind-entrypoint.sh
 echo "Docker binary is automatically managed by dind container"
 
-# Function to Create Docker Wrappers
-# Usage: create_docker_wrapper name container command user
-# user: "app" for PHP container (uses app user), "root" for others
-create_docker_wrapper() {
-    local name="$1"
-    local container="$2"
-    local command="$3"
-    local user="${4:-root}"  # Default to root if not specified
-    local target1="/usr/local/bin/$name"
-    local target2="$HOME/Docker/general/bin/$name"
-
-    cat <<EOF | sudo tee $target1 > /dev/null
-#!/bin/bash
-current_dir=\$(basename "\$(pwd)")
-docker exec -u$user -i -w "/var/www/\$current_dir" $container $command "\$@"
-EOF
-
-    cat <<EOF | sudo tee $target2 > /dev/null
-#!/bin/bash
-current_dir=\$(basename "\$(pwd)")
-docker exec -u$user -i -w "/var/www/\$current_dir" $container $command "\$@"
-EOF
-
-    sudo chmod +rx $target1 $target2
-}
-
-# Create Docker Wrapper Scripts
-# Format: name|container|command|user
-# Commands that access /var/www use 'app' user for consistency and shared volume compatibility
-# Database commands (mysql/mysqldump) use 'root' since mariadb container doesn't have 'app' user
-
 # Ensure target directory exists
 mkdir -p "$HOME/Docker/general/bin"
 
-# Process each wrapper script definition
-# Using a function to avoid array syntax issues in some shells
-process_wrapper() {
+# Create PHP wrapper (php, composer, magerun, magerun2, msmtp)
+# Tries php-{project} first, falls back to php
+create_php_wrapper() {
     local name="$1"
-    local container="$2"
-    local command="$3"
-    local user="${4:-root}"
-    create_docker_wrapper "$name" "$container" "$command" "$user"
+    local command="$2"
+    local target1="/usr/local/bin/$name"
+    local target2="$HOME/Docker/general/bin/$name"
+
+    cat <<'EOF' | sudo tee "$target1" > /dev/null
+#!/bin/bash
+project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
+
+if docker ps --format '{{.Names}}' | grep -q "^php-${project}$"; then
+    container="php-$project"
+else
+    container="php"
+fi
+
+EOF
+    echo "docker exec -uapp -i -w \"/var/www/\$project\" \"\$container\" $command \"\$@\"" | sudo tee -a "$target1" > /dev/null
+
+    cat <<'EOF' | sudo tee "$target2" > /dev/null
+#!/bin/bash
+project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
+
+if docker ps --format '{{.Names}}' | grep -q "^php-${project}$"; then
+    container="php-$project"
+else
+    container="php"
+fi
+
+EOF
+    echo "docker exec -uapp -i -w \"/var/www/\$project\" \"\$container\" $command \"\$@\"" | sudo tee -a "$target2" > /dev/null
+
+    sudo chmod +rx "$target1" "$target2"
+}
+
+# Create Node wrapper (npm, nodejs, grunt)
+# Tries nodejs-{project} first, falls back to nodejs
+create_node_wrapper() {
+    local name="$1"
+    local command="$2"
+    local target1="/usr/local/bin/$name"
+    local target2="$HOME/Docker/general/bin/$name"
+
+    cat <<'EOF' | sudo tee "$target1" > /dev/null
+#!/bin/bash
+project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
+
+if docker ps --format '{{.Names}}' | grep -q "^nodejs-${project}$"; then
+    container="nodejs-$project"
+else
+    container="nodejs"
+fi
+
+EOF
+    echo "docker exec -uroot -i -w \"/var/www/\$project\" \"\$container\" $command \"\$@\"" | sudo tee -a "$target1" > /dev/null
+
+    cat <<'EOF' | sudo tee "$target2" > /dev/null
+#!/bin/bash
+project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
+
+if docker ps --format '{{.Names}}' | grep -q "^nodejs-${project}$"; then
+    container="nodejs-$project"
+else
+    container="nodejs"
+fi
+
+EOF
+    echo "docker exec -uroot -i -w \"/var/www/\$project\" \"\$container\" $command \"\$@\"" | sudo tee -a "$target2" > /dev/null
+
+    sudo chmod +rx "$target1" "$target2"
+}
+
+# Create MySQL wrapper (mysql, mysqldump)
+# Tries mariadb-{project}, then postgres-{project}, falls back to mariadb
+create_mysql_wrapper() {
+    local name="$1"
+    local command="$2"
+    local pg_command="$3"
+    local target1="/usr/local/bin/$name"
+    local target2="$HOME/Docker/general/bin/$name"
+
+    cat <<EOF | sudo tee "$target1" > /dev/null
+#!/bin/bash
+project=\$(pwd | sed "s|\$HOME/Sites/||" | cut -d'/' -f1)
+
+if docker ps --format '{{.Names}}' | grep -q "^mariadb-\${project}\$"; then
+    container="mariadb-\$project"
+elif docker ps --format '{{.Names}}' | grep -q "^postgres-\${project}\$"; then
+    docker exec -i "postgres-\$project" $pg_command -U root "\$@"
+    exit \$?
+else
+    container="mariadb"
+fi
+
+docker exec -uroot -i -w "/var/www/\$project" "\$container" $command "\$@"
+EOF
+
+    cat <<EOF | sudo tee "$target2" > /dev/null
+#!/bin/bash
+project=\$(pwd | sed "s|\$HOME/Sites/||" | cut -d'/' -f1)
+
+if docker ps --format '{{.Names}}' | grep -q "^mariadb-\${project}\$"; then
+    container="mariadb-\$project"
+elif docker ps --format '{{.Names}}' | grep -q "^postgres-\${project}\$"; then
+    docker exec -i "postgres-\$project" $pg_command -U root "\$@"
+    exit \$?
+else
+    container="mariadb"
+fi
+
+docker exec -uroot -i -w "/var/www/\$project" "\$container" $command "\$@"
+EOF
+
+    sudo chmod +rx "$target1" "$target2"
+}
+
+# Create Redis wrapper
+# Tries redis-{project} first, falls back to redis
+create_redis_wrapper() {
+    local target1="/usr/local/bin/redis-cli"
+    local target2="$HOME/Docker/general/bin/redis-cli"
+
+    cat <<'EOF' | sudo tee "$target1" > /dev/null
+#!/bin/bash
+project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
+
+if docker ps --format '{{.Names}}' | grep -q "^redis-${project}$"; then
+    container="redis-$project"
+else
+    container="redis"
+fi
+
+docker exec -uroot -i -w "/var/www/$project" "$container" redis-cli "$@"
+EOF
+
+    cat <<'EOF' | sudo tee "$target2" > /dev/null
+#!/bin/bash
+project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
+
+if docker ps --format '{{.Names}}' | grep -q "^redis-${project}$"; then
+    container="redis-$project"
+else
+    container="redis"
+fi
+
+docker exec -uroot -i -w "/var/www/$project" "$container" redis-cli "$@"
+EOF
+
+    sudo chmod +rx "$target1" "$target2"
+}
+
+# Create Nginx wrapper
+# Tries nginx-{project} first, falls back to nginx
+create_nginx_wrapper() {
+    local target1="/usr/local/bin/nginx"
+    local target2="$HOME/Docker/general/bin/nginx"
+
+    cat <<'EOF' | sudo tee "$target1" > /dev/null
+#!/bin/bash
+project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
+
+if docker ps --format '{{.Names}}' | grep -q "^nginx-${project}$"; then
+    container="nginx-$project"
+else
+    container="nginx"
+fi
+
+docker exec -uapp -i -w "/var/www/$project" "$container" nginx "$@"
+EOF
+
+    cat <<'EOF' | sudo tee "$target2" > /dev/null
+#!/bin/bash
+project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
+
+if docker ps --format '{{.Names}}' | grep -q "^nginx-${project}$"; then
+    container="nginx-$project"
+else
+    container="nginx"
+fi
+
+docker exec -uapp -i -w "/var/www/$project" "$container" nginx "$@"
+EOF
+
+    sudo chmod +rx "$target1" "$target2"
 }
 
 # Create wrapper scripts
-# PHP container commands - use 'app' user (matches PHP-FPM user for file ownership)
-process_wrapper "php" "php" "php -d memory_limit=-1" "app"
-process_wrapper "composer" "php" "php -d memory_limit=-1 /usr/local/bin/composer" "app"
-process_wrapper "magerun" "php" "magerun" "app"
-process_wrapper "magerun2" "php" "magerun2" "app"
-process_wrapper "msmtp" "php" "msmtp" "app"
-# NodeJS container commands - use 'root' for Docker socket access
-# Grunt exec tasks use docker to run PHP commands (requires socket access)
-process_wrapper "nodejs" "nodejs" "nodejs" "root"
-process_wrapper "npm" "nodejs" "npm" "root"
-process_wrapper "grunt" "nodejs" "grunt" "root"
-# Nginx - use 'app' for consistency
-process_wrapper "nginx" "nginx" "nginx" "app"
-# Database commands - mariadb doesn't have 'app' user, keep as root
-process_wrapper "mysql" "mariadb" "mysql" "root"
-process_wrapper "mysqldump" "mariadb" "mysqldump" "root"
-# Redis - doesn't access /var/www, keep as root
-process_wrapper "redis-cli" "redis" "redis-cli" "root"
+echo "Creating PHP wrappers..."
+create_php_wrapper "php" "php -d memory_limit=-1"
+create_php_wrapper "composer" "php -d memory_limit=-1 /usr/local/bin/composer"
+create_php_wrapper "magerun" "magerun"
+create_php_wrapper "magerun2" "magerun2"
+create_php_wrapper "msmtp" "msmtp"
+
+echo "Creating Node wrappers..."
+create_node_wrapper "nodejs" "node"
+create_node_wrapper "npm" "npm"
+create_node_wrapper "grunt" "grunt"
+
+echo "Creating MySQL wrappers..."
+create_mysql_wrapper "mysql" "mysql" "psql"
+create_mysql_wrapper "mysqldump" "mysqldump" "pg_dump"
+
+echo "Creating Redis wrapper..."
+create_redis_wrapper
+
+echo "Creating Nginx wrapper..."
+create_nginx_wrapper
 
 echo "All configurations have been applied successfully."

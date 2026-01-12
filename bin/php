@@ -1,3 +1,11 @@
 #!/bin/bash
-current_dir=$(basename "$(pwd)")
-docker exec -uapp -i -w "/var/www/$current_dir" php php -d memory_limit=-1 "$@"
+project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
+
+# Try php-{project} first, fallback to php
+if docker ps --format '{{.Names}}' | grep -q "^php-${project}$"; then
+    container="php-$project"
+else
+    container="php"
+fi
+
+docker exec -uapp -i -w "/var/www/$project" "$container" php -d memory_limit=-1 "$@"
