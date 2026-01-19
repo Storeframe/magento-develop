@@ -1,7 +1,6 @@
 #!/bin/bash
 project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
 
-# Try redis-{project} first, fallback to redis
 if docker ps --format '{{.Names}}' | grep -q "^redis-${project}$"; then
     container="redis-$project"
 else

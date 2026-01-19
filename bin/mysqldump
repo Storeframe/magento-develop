@@ -1,7 +1,6 @@
 #!/bin/bash
 project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
 
-# Try project-specific, fallback to default
 if docker ps --format '{{.Names}}' | grep -q "^mariadb-${project}$"; then
     container="mariadb-$project"
 elif docker ps --format '{{.Names}}' | grep -q "^postgres-${project}$"; then

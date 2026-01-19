@@ -1,11 +1,10 @@
 #!/bin/bash
 project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
 
-# Try nginx-{project} first, fallback to nginx
 if docker ps --format '{{.Names}}' | grep -q "^nginx-${project}$"; then
     container="nginx-$project"
 else
     container="nginx"
 fi
 
-docker exec -uroot -i -w "/var/www/$project" "$container" nginx "$@"
+docker exec -u root -i "$container" nginx "$@"

@@ -1,7 +1,6 @@
 #!/bin/bash
 project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
 
-# Try nodejs-{project} first, fallback to nodejs
 if docker ps --format '{{.Names}}' | grep -q "^nodejs-${project}$"; then
     container="nodejs-$project"
 else

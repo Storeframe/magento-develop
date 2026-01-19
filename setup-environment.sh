@@ -197,7 +197,7 @@ else
     container="nginx"
 fi
 
-docker exec -uapp -i -w "/var/www/$project" "$container" nginx "$@"
+docker exec -u root -i "$container" nginx "$@"
 EOF
 
     cat <<'EOF' | sudo tee "$target2" > /dev/null
@@ -210,7 +210,7 @@ else
     container="nginx"
 fi
 
-docker exec -uapp -i -w "/var/www/$project" "$container" nginx "$@"
+docker exec -u root -i "$container" nginx "$@"
 EOF
 
     sudo chmod +rx "$target1" "$target2"
