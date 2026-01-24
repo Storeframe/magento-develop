@@ -53,10 +53,12 @@ services:
     networks:
       - revproxy
 
-# Elasticsearch - Official image (uncomment to use instead of OpenSearch)
-# Plugins (analysis-phonetic, analysis-icu) installed at runtime if needed
+# Elasticsearch - Official image with plugins (uncomment to use instead of OpenSearch)
 #  elasticsearch:
-#    image: "elasticsearch:${ELASTICSEARCH_VERSION}"
+#    build:
+#      context: ./elasticsearch
+#      args:
+#        ELASTICSEARCH_VERSION: ${ELASTICSEARCH_VERSION}
 #    container_name: elasticsearch
 #    restart: unless-stopped
 #    # ports:
@@ -73,10 +75,12 @@ services:
 #    networks:
 #      - revproxy
 
-# OpenSearch - Official image (default search engine)
-# Plugins (analysis-phonetic, analysis-icu) installed at runtime if needed
+# OpenSearch - Official image with plugins (default search engine)
   opensearch:
-    image: "opensearchproject/opensearch:${OPENSEARCH_VERSION}"
+    build:
+      context: ./opensearch
+      args:
+        OPENSEARCH_VERSION: ${OPENSEARCH_VERSION}
     container_name: opensearch
     restart: unless-stopped
     # ports:
