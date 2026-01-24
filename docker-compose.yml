@@ -18,7 +18,6 @@ services:
       - "~/Docker/general/php/php-entrypoint.sh:/usr/local/bin/php-entrypoint.sh:ro"
       - "~/Docker/general/docker-bin/docker:/usr/local/bin/docker:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "~/Docker/general/bin/npm:/usr/local/bin/npm"
       - "~/Docker/general/bin/mysql:/usr/local/bin/mysql"
       - "~/Docker/general/bin/mysqldump:/usr/local/bin/mysqldump"
       - "~/Docker/general/php/php-fpm.d/www.conf:/usr/local/etc/php-fpm.d/www.conf"
@@ -54,26 +53,30 @@ services:
     networks:
       - revproxy
 
+# Elasticsearch - Official image (uncomment to use instead of OpenSearch)
+# Plugins (analysis-phonetic, analysis-icu) installed at runtime if needed
 #  elasticsearch:
-#     image: "storeframe/elasticsearch:${ELASTICSEARCH_VERSION}"
-#     container_name: elasticsearch
-#     restart: unless-stopped
-#     # ports:
-#     #   - "9200:9200"
-#     #   - "9300:9300"
-#     environment:
-#       - discovery.type=single-node
-#       - cluster.routing.allocation.disk.threshold_enabled=false
-#       - indices.id_field_data.enabled=true
-#       - xpack.security.enabled=false
-#       - ES_JAVA_OPTS=-Xms1g -Xmx1g
-#     tmpfs:
-#       - "/tmp:rw"
-#     networks:
-#       - revproxy
+#    image: "elasticsearch:${ELASTICSEARCH_VERSION}"
+#    container_name: elasticsearch
+#    restart: unless-stopped
+#    # ports:
+#    #   - "9200:9200"
+#    #   - "9300:9300"
+#    environment:
+#      - discovery.type=single-node
+#      - cluster.routing.allocation.disk.threshold_enabled=false
+#      - indices.id_field_data.enabled=true
+#      - xpack.security.enabled=false
+#      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+#    volumes:
+#      - elasticsearch_data:/usr/share/elasticsearch/data
+#    networks:
+#      - revproxy
 
+# OpenSearch - Official image (default search engine)
+# Plugins (analysis-phonetic, analysis-icu) installed at runtime if needed
   opensearch:
-    image: "storeframe/opensearch:${OPENSEARCH_VERSION}"
+    image: "opensearchproject/opensearch:${OPENSEARCH_VERSION}"
     container_name: opensearch
     restart: unless-stopped
     # ports:
@@ -82,28 +85,10 @@ services:
     environment:
       - discovery.type=single-node
       - cluster.routing.allocation.disk.threshold_enabled=false
-      - indices.id_field_data.enabled=true
       - DISABLE_SECURITY_PLUGIN=true
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
-    tmpfs:
-      - "/tmp:rw"
-    networks:
-      - revproxy
-
-  nodejs:
-    image: "storeframe/nodejs:${NODEJS_VERSION}"
-    container_name: nodejs
-    restart: unless-stopped
-    # Run as root for: 1) docker socket access, 2) cross-platform file permissions
-    # Node processes typically run as non-root user internally (check Dockerfile)
-    user: root
-    depends_on:
-      - dind
+      - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
     volumes:
-      - "~/Sites:/var/www"
-      - "~/Docker/general/bin/php:/usr/local/bin/php:ro"
-      - "~/Docker/general/docker-bin/docker:/usr/local/bin/docker:ro"
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - opensearch_data:/usr/share/opensearch/data
     networks:
       - revproxy
 
@@ -212,3 +197,7 @@ networks:
     ipam:
       config:
         - subnet: 172.168.0.0/24
+
+volumes:
+  opensearch_data:
+  elasticsearch_data:

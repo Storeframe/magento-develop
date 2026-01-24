@@ -65,41 +65,21 @@ EOF
     sudo chmod +rx "$target1" "$target2"
 }
 
-# Create Node wrapper (npm, nodejs, grunt)
-# Tries nodejs-{project} first, falls back to nodejs
-create_node_wrapper() {
-    local name="$1"
-    local command="$2"
-    local target1="/usr/local/bin/$name"
-    local target2="$HOME/Docker/general/bin/$name"
-
-    cat <<'EOF' | sudo tee "$target1" > /dev/null
-#!/bin/bash
-project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
-
-if docker ps --format '{{.Names}}' | grep -q "^nodejs-${project}$"; then
-    container="nodejs-$project"
-else
-    container="nodejs"
-fi
-
-EOF
-    echo "docker exec -uroot -i -w \"/var/www/\$project\" \"\$container\" $command \"\$@\"" | sudo tee -a "$target1" > /dev/null
-
-    cat <<'EOF' | sudo tee "$target2" > /dev/null
-#!/bin/bash
-project=$(pwd | sed "s|$HOME/Sites/||" | cut -d'/' -f1)
-
-if docker ps --format '{{.Names}}' | grep -q "^nodejs-${project}$"; then
-    container="nodejs-$project"
-else
-    container="nodejs"
-fi
-
-EOF
-    echo "docker exec -uroot -i -w \"/var/www/\$project\" \"\$container\" $command \"\$@\"" | sudo tee -a "$target2" > /dev/null
-
-    sudo chmod +rx "$target1" "$target2"
+# Cleanup old Node wrappers (nodejs container removed - use local npm/node instead)
+cleanup_node_wrappers() {
+    echo "Cleaning up old Node wrappers (using local npm/node instead)..."
+    for name in nodejs npm grunt; do
+        # Remove from /usr/local/bin if it's our wrapper (not the real binary)
+        if [ -f "/usr/local/bin/$name" ] && grep -q "docker exec" "/usr/local/bin/$name" 2>/dev/null; then
+            sudo rm -f "/usr/local/bin/$name"
+            echo "  Removed /usr/local/bin/$name (was Docker wrapper)"
+        fi
+        # Remove from ~/Docker/general/bin
+        if [ -f "$HOME/Docker/general/bin/$name" ]; then
+            rm -f "$HOME/Docker/general/bin/$name"
+            echo "  Removed $HOME/Docker/general/bin/$name"
+        fi
+    done
 }
 
 # Create MySQL wrapper (mysql, mysqldump)
@@ -224,10 +204,8 @@ create_php_wrapper "magerun" "magerun"
 create_php_wrapper "magerun2" "magerun2"
 create_php_wrapper "msmtp" "msmtp"
 
-echo "Creating Node wrappers..."
-create_node_wrapper "nodejs" "node"
-create_node_wrapper "npm" "npm"
-create_node_wrapper "grunt" "grunt"
+# Node wrappers removed - use local npm/node instead
+cleanup_node_wrappers
 
 echo "Creating MySQL wrappers..."
 create_mysql_wrapper "mysql" "mysql" "psql"
